@@ -18,12 +18,27 @@ def filterValidUpdates(update: str):
   return validUpdate
   
 validUpdates = list(filter(filterValidUpdates, updates))
+
+def fixInvalidUpdate(update: str):
+  i = 0
+  pages = update.split(',')
+  while i < len(pages) - 1:
+    k = i + 1
+    while k < len(pages):
+      reverse = pages[k] + '|' + pages[i]
+      if reverse in rulesByLine:
+        tmpEl1 = pages[k]
+        pages[k] = pages[i]
+        pages[i] = tmpEl1
+      k += 1
+    i += 1
+  return pages
+
+
+invalidUpdates = list(filter(lambda update: update not in validUpdates, updates))
+fixedUpdates = list(map(fixInvalidUpdate, invalidUpdates))
 sum = 0
-for validUpdate in validUpdates:
-  elements = validUpdate.split(',')
-  start = len(elements) // 2
-  end = start + 1
-  middleElement = int(elements[start:end][0])
-  sum += middleElement
+for u in fixedUpdates:
+  sum += int(u[len(u) // 2])
 
 print(sum)
