@@ -1,4 +1,6 @@
-data = open('./actualdata.txt').read()
+import time
+
+data = open('./testdata.txt').read()
 matrix = list(map(list, data.splitlines()))
 
 def printMatrix(m: list[list[str]]):
@@ -15,75 +17,75 @@ def guardDirection(guardSymbol: str):
   elif guardSymbol == '<':
     return 'west'
 
-printMatrix(matrix)
+def canTakeNextStep(rowIndex: int, colIndex: int, guard: str):
+  if guard == '^':
+    return rowIndex - 1 >= 0
+  elif guard == '>':
+    return colIndex + 1 < len(matrix[0])
+  elif guard == 'v':
+    return rowIndex + 1 < len(matrix)
+  else:
+    return colIndex - 1 >= 0
+
+def getThingInFrontOfGuard(rowIndex: int, colIndex: int, guard: str):
+  if guard == '^':
+    return matrix[rowIndex - 1][colIndex]
+  elif guard == '>':
+    return matrix[rowIndex][colIndex + 1]
+  elif guard == 'v':
+    return matrix[rowIndex + 1][colIndex]
+  else:
+    return matrix[rowIndex][colIndex - 1]
+
+def takeStep(rowIndex: int, colIndex: int, guard: str):
+  if guard == '^':
+    matrix[rowIndex][colIndex] = 'X'
+    matrix[rowIndex - 1][colIndex] = '^'
+    return rowIndex - 1, colIndex
+  elif guard == '>':
+    matrix[rowIndex][colIndex] = 'X'
+    matrix[rowIndex][colIndex + 1] = '>'
+    return rowIndex, colIndex + 1
+  elif guard == 'v':
+    matrix[rowIndex][colIndex] = 'X'
+    matrix[rowIndex + 1][colIndex] = 'v'
+    return rowIndex + 1, colIndex
+  else:
+    matrix[rowIndex][colIndex] = 'X'
+    matrix[rowIndex][colIndex - 1] = '<'
+    return rowIndex, colIndex - 1
+
+def turnRight(rowIndex: int, colIndex: int, guard: str):
+  newGuard = ''
+  if guard == '^':
+    newGuard = '>'
+  elif guard == '>':
+    newGuard = 'v'
+  elif guard == 'v':
+    newGuard = '<'
+  elif guard == '<':
+    newGuard = '^'
+  matrix[rowIndex][colIndex] = newGuard
+  
 withoutNewline = ''.join(data.splitlines())
 startIndex = withoutNewline.find('^')
 rowIndex = startIndex // len(matrix) 
 colIndex = startIndex % len(matrix[0])
 
 i = 0
-guardStillOnMap = True
-while i < 10000 and guardStillOnMap:
+while i < 1000:
+  time.sleep(.3)
+  guard = matrix[rowIndex][colIndex]
   direction = guardDirection(matrix[rowIndex][colIndex])
-  if direction == 'north':
-    if rowIndex - 1 < 0:
-      guardStillOnMap = False
-      continue
-      # Break here somehow
-    thingInFrontOfGuard = matrix[rowIndex - 1][colIndex]
-    if thingInFrontOfGuard == '.' or thingInFrontOfGuard == 'X':
-      matrix[rowIndex][colIndex] = 'X'
-      matrix[rowIndex - 1][colIndex] = '^'
-      rowIndex -= 1
-    if thingInFrontOfGuard == '#':
-      matrix[rowIndex][colIndex] = '>'
-  elif direction == 'east':
-    if colIndex + 1 >= len(matrix[0]):
-      guardStillOnMap = False
-      continue
-      # Break here somehow
-    thingInFrontOfGuard = matrix[rowIndex][colIndex + 1]
-    if thingInFrontOfGuard == '.' or thingInFrontOfGuard == 'X':
-      matrix[rowIndex][colIndex] = 'X'
-      matrix[rowIndex ][colIndex + 1] = '>'
-      colIndex += 1
-    if thingInFrontOfGuard == '#':
-      matrix[rowIndex][colIndex] = 'v'
-  elif direction == 'south':
-    if rowIndex + 1 >= len(matrix):
-      guardStillOnMap = False
-      continue
-      # Break here somehow
-    thingInFrontOfGuard = matrix[rowIndex + 1][colIndex]
-    if thingInFrontOfGuard == '.' or thingInFrontOfGuard == 'X':
-      matrix[rowIndex][colIndex] = 'X'
-      matrix[rowIndex + 1][colIndex] = 'v'
-      rowIndex += 1
-    if thingInFrontOfGuard == '#':
-      matrix[rowIndex][colIndex] = '<'
-  elif direction == 'west':
-    if colIndex - 1 < 0:
-      guardStillOnMap = False
-      continue
-      # Break here somehow
-    thingInFrontOfGuard = matrix[rowIndex][colIndex - 1]
-    if thingInFrontOfGuard == '.' or thingInFrontOfGuard == 'X':
-      matrix[rowIndex][colIndex] = 'X'
-      matrix[rowIndex ][colIndex - 1] = '<'
-      colIndex -= 1
-    if thingInFrontOfGuard == '#':
-      matrix[rowIndex][colIndex] = '^'
-  if i % 100 == 0:
+  canTakeStep = canTakeNextStep(rowIndex, colIndex, guard)
+  if not canTakeStep:
+    break
+  thingInFrontOfGuard = getThingInFrontOfGuard(rowIndex, colIndex, guard)
+  if thingInFrontOfGuard == '.' or thingInFrontOfGuard == 'X':
+    rowIndex, colIndex = takeStep(rowIndex, colIndex, guard)
+  else:
+    turnRight(rowIndex, colIndex, guard)
+  if i % 1 == 0:
     print(f'\n{i}\n')
     printMatrix(matrix)
   i += 1
-
-totalPlaces = 0
-for row in matrix:
-  for column in row:
-    if column == 'X':
-      totalPlaces += 1
-# In the solution, do not update the grid the last time, so there will be an '^' or similar on the "map"
-totalPlaces += 1
-
-print(totalPlaces)
