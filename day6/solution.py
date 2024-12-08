@@ -1,6 +1,7 @@
 import time
 
-data = open('./testdata.txt').read()
+data = open('./actualdata.txt').read()
+resultdata = open('./resultpt1actualdata.txt').read()
 
 def printMatrix(m: list[list[str]]):
   for row in m:
@@ -52,25 +53,26 @@ def turnRight(matrix: list[list[str]], rowIndex: int, colIndex: int, guard: str)
     newGuardDirection = '^'
   matrix[rowIndex][colIndex] = newGuardDirection
 
-def runGuardSimulation(initialRun: bool):
+def runGuardSimulation(obstaclePosition: list[int]):
+  obsRow, obsCol = obstaclePosition[0], obstaclePosition[1]
   withoutNewline = ''.join(data.splitlines())
   startIndex = withoutNewline.find('^')
   matrix = list(map(list, data.splitlines()))
   rowIndex = startIndex // len(matrix) 
   colIndex = startIndex % len(matrix[0])
+  matrix[obsRow][obsCol] = 'O'
 
   allStepCoordinates = set()
   moves = set()
   guardLeftMap = False
   loopDetected = False
   i = 0
-  while not guardLeftMap and not loopDetected and i < 10000:
+  while not guardLeftMap and not loopDetected and i < 1000000:
     guard = matrix[rowIndex][colIndex]
     matrix[rowIndex][colIndex] = 'X'
     allStepCoordinates.add(str(rowIndex) + ',' + str(colIndex))
     guardLeftMap = not guardWillStayOnMap(matrix, rowIndex, colIndex, guard)
     if guardLeftMap:
-      print('SOLUTION FOUND, BREAKING')
       break
     thingInFrontOfGuard = getThingInFrontOfGuard(matrix, rowIndex, colIndex, guard)
     if thingInFrontOfGuard == '.' or thingInFrontOfGuard == 'X':
@@ -80,21 +82,28 @@ def runGuardSimulation(initialRun: bool):
       move += '[' + str(rowIndex) + ',' + str(colIndex) + ']'
       moves.add(move)
       if nrUniqueMoves == len(moves):
-        print('NO NEW MOVE WAS DETECTED - CYCLE')
+        loopDetected = True
     else:
       turnRight(matrix, rowIndex, colIndex, guard)
-    if i % 200 == 0:
-      print(f'\n{i}\n')
-      printMatrix(matrix)
     i += 1
-  printMatrix(matrix)
-  print(len(allStepCoordinates))
-  if initialRun:
-    return allStepCoordinates
-  else:
-    return {
-      "guardLeftMap": guardLeftMap,
-      "loopDetected": loopDetected,
-      "moves": moves
-    }
+  return {
+    "guardLeftMap": guardLeftMap,
+    "loopDetected": loopDetected,
+  }
 
+def getAllPossibleObstaclePositions():
+  matrix = list(map(list, resultdata.splitlines()))
+  positions = []
+  for rowIndex in range(0, len(matrix)):
+    for colIndex in range(0, len(matrix[rowIndex])):
+      if matrix[rowIndex][colIndex] == 'X':
+        positions.append([rowIndex, colIndex])
+  return positions
+
+possibleObstaclePositions = getAllPossibleObstaclePositions()
+actualLoops = []
+for position in possibleObstaclePositions:
+  result = runGuardSimulation(position)
+  if result["loopDetected"]:
+    actualLoops.append(result)
+print(len(actualLoops))
